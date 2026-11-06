@@ -52,6 +52,13 @@ runtime loads:
 
 ## Phase 1a: read-only probe
 
+Your current network connection is not affected. The kext matches only the
+Realtek Wi-Fi PCI IDs (`10ec:c852` and the other rtw89 IDs), which have no
+macOS driver today. It does not match the onboard Ethernet controller or any
+USB adapter, and `kmutil unload -b org.rtw89osx.AirportRtw89` unloads only
+this kext. Worst case (a panic), the machine reboots and comes back up
+without it.
+
 What it does: attaches to the Realtek PCIe function, reads its PCI IDs and
 one read-only chip register (`SYS_CFG1`, which gives the chip cut), and
 writes them to the log and the IORegistry. It doesn't power on the chip,
