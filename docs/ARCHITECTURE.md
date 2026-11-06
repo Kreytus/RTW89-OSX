@@ -452,6 +452,13 @@ RTL8852CE, macOS **26.7 Tahoe (25G229)** only, SMBIOS MacBookPro16,1,
 OpenCore on the only USB stick. **Tahoe is the only test target**, so
 Sonoma/Sequoia rows in STATUS stay untested unless someone else tests them.
 
+The owner runs **no OCLP root patches**, so the Wi-Fi glue has to work
+against **stock 26.7 IO80211 + IOSkywalkFamily**. The itlwm/OCLP route
+(restoring older IO80211 binaries) is out. That is the cleaner target anyway
+(no reduced-security root patching, OTA updates keep working), but there's no
+precedent for it. The first Phase 2 task is a class/vtable dump of the 26.7
+IO80211 and IOSkywalkFamily kexts from the kernel collection.
+
 Still open: exact PCI subsystem ID (from the Phase 1a probe), BT VID:PID,
 SIP value, OCLP state, OpenCore version, and a Linux reference boot.
 

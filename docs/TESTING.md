@@ -10,6 +10,8 @@ Test machine (owner's):
 | SMBIOS | MacBookPro16,1 |
 | Boot | OpenCore on the only USB stick. No second boot medium |
 | SIP | Fully disabled (`csrutil status`, owner report) |
+| USB map | USBToolBox (`USBToolBox.kext` + `UTBMap.kext`) |
+| OCLP | **No root patches installed.** IO80211/IOSkywalkFamily are stock 26.7 |
 | BT as macOS sees it | Only the placeholder entry bluetoothd shows when it finds **no** controller: `Chipset BCM_4350C2, Transport UART, Address NULL, Firmware v0 c0, Vendor 0x004C`. The Realtek USB BT device hasn't been identified yet; it may be hidden by the USB port map (see below) |
 
 ## Rule 1: never inject development kexts through OpenCore
@@ -99,12 +101,15 @@ What to send back:
    ```
 
    If nothing Realtek-like shows up, the internal USB port the BT module sits
-   on is probably not in your USB port map (USBToolBox/UTBMap or similar).
-   The BT half can't be tested until that port is mapped. Wi-Fi isn't
-   affected.
+   on is probably not in your USB port map. The BT half can't be tested
+   until that port is mapped. Wi-Fi isn't affected. With USBToolBox: run the
+   USBToolBox tool, discover ports, find the port the Realtek BT device shows
+   up on (an internal USB 2.0 header port), include it with type
+   **Internal (255)**, rebuild `UTBMap.kext` and replace the old one in
+   `EFI/OC/Kexts`. Back up the EFI first (see Rule 1): this is a boot-time
+   change.
 
-4. Whether OCLP root patches are installed (OCLP app → Post-Install Root
-   Patch), and your OpenCore version.
+4. Your OpenCore version (OCLP: answered, none installed).
 
 If the log says `mmio-unreachable`, the chip didn't answer on BAR2. Send the
 log plus `ioreg -l -p IODeviceTree | grep -i -A3 'pci10ec'`.
