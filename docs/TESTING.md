@@ -64,8 +64,20 @@ one read-only chip register (`SYS_CFG1`, which gives the chip cut), and
 writes them to the log and the IORegistry. It doesn't power on the chip,
 enable DMA, register interrupts or write any device register.
 
+The artifact zip has `Debug/AirportRtw89.kext` and
+`Release/AirportRtw89.kext` inside. Safari may unzip it on its own into a
+folder named `AirportRtw89-<sha>`. These commands work either way:
+
 ```bash
-sudo cp -R AirportRtw89.kext /tmp/ && sudo chown -R root:wheel /tmp/AirportRtw89.kext
+cd ~/Downloads && for z in AirportRtw89-*.zip; do [ -e "$z" ] && unzip -o "$z" -d "${z%.zip}"; done
+```
+
+```bash
+K=$(find ~/Downloads -type d -name AirportRtw89.kext -path '*Debug*' | head -1); echo "$K"
+```
+
+```bash
+sudo rm -rf /tmp/AirportRtw89.kext; sudo cp -R "$K" /tmp/ && sudo chown -R root:wheel /tmp/AirportRtw89.kext && sudo xattr -cr /tmp/AirportRtw89.kext
 ```
 
 ```bash
