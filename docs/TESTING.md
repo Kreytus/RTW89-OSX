@@ -9,6 +9,8 @@ Test machine (owner's):
 | macOS | 26.7 Tahoe (25G229) |
 | SMBIOS | MacBookPro16,1 |
 | Boot | OpenCore on the only USB stick. No second boot medium |
+| SIP | Fully disabled (`csrutil status`, owner report) |
+| BT as macOS sees it | Only the placeholder entry bluetoothd shows when it finds **no** controller: `Chipset BCM_4350C2, Transport UART, Address NULL, Firmware v0 c0, Vendor 0x004C`. The Realtek USB BT device hasn't been identified yet; it may be hidden by the USB port map (see below) |
 
 ## Rule 1: never inject development kexts through OpenCore
 
@@ -87,11 +89,19 @@ What to send back:
 1. All `rtw89:` log lines, from load and from unload.
 2. Whether load and unload both worked without a panic, and whether loading
    needed approval or a reboot.
-3. The BT controller's USB VID:PID:
+3. The BT controller's USB VID:PID. `SPBluetoothDataType` doesn't show it
+   (it only lists controllers bluetoothd accepted), so list raw USB devices.
+   Realtek's vendor ID is `0x0bda` (3034); OEM IDs such as `0x13d3`,
+   `0x0489`, `0x04ca`, `0x04c5` and `0x0cb8` are also common for 8852CE:
 
    ```bash
-   system_profiler SPUSBDataType SPBluetoothDataType
+   ioreg -p IOUSB -l -w0 | grep -E '"USB Product Name"|"idVendor"|"idProduct"'
    ```
+
+   If nothing Realtek-like shows up, the internal USB port the BT module sits
+   on is probably not in your USB port map (USBToolBox/UTBMap or similar).
+   The BT half can't be tested until that port is mapped. Wi-Fi isn't
+   affected
 
 4. Whether OCLP root patches are installed (OCLP app → Post-Install Root
    Patch), and your OpenCore version.
