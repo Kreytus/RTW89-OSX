@@ -101,7 +101,7 @@ What to send back:
    If nothing Realtek-like shows up, the internal USB port the BT module sits
    on is probably not in your USB port map (USBToolBox/UTBMap or similar).
    The BT half can't be tested until that port is mapped. Wi-Fi isn't
-   affected
+   affected.
 
 4. Whether OCLP root patches are installed (OCLP app → Post-Install Root
    Patch), and your OpenCore version.
