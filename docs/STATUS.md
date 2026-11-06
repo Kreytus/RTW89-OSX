@@ -3,14 +3,15 @@
 Legend: **working** (tested on real hardware), **partial**, **untested**
 (code exists, not run on hardware), **not started**.
 
-Current phase: **0, research.** No code exists, so every row is
-**not started**.
+Current phase: **1a, read-only PCIe probe** (code exists, untested).
+Test machine: B650M D3HP AX, RTL8852CE, macOS 26.7 (25G229).
 
-## Feature × macOS (RTL8852BE, primary test chip)
+## Feature × macOS (RTL8852CE, primary test chip)
 
 | Feature | 14 Sonoma | 15 Sequoia | 26 Tahoe |
 |---|---|---|---|
-| PCIe probe / FW download / MAC read | not started | not started | not started |
+| PCIe probe + chip ID (Phase 1a) | not started | not started | untested |
+| Power-on / FW download / MAC read (Phase 1b) | not started | not started | not started |
 | Native Wi-Fi menu + Settings pane | not started | not started | not started |
 | Scan 2.4 / 5 / 6 GHz | not started | not started | not started |
 | Open / WPA2-PSK / WPA3-SAE | not started | not started | not started |
@@ -25,5 +26,5 @@ Current phase: **0, research.** No code exists, so every row is
 
 ## Other chips
 
-RTL8852BT, RTL8851BE, RTL8852AE, RTL8852CE, RTL8922AE: not started (planned
-after 8852BE; see ARCHITECTURE §2).
+RTL8852BE, RTL8852BT, RTL8851BE, RTL8852AE, RTL8922AE: not started (planned
+after 8852CE; see ARCHITECTURE §2).

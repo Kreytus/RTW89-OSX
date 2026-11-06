@@ -1,0 +1,39 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kexts:
+    # Apple-silicon runner cross-compiles the x86_64 kext.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch MacKernelSDK (pinned)
+        run: make sdk
+
+      - name: Build Debug and Release
+        run: make all
+
+      - name: Inspect binaries
+        run: |
+          for c in Debug Release; do
+            k=build/$c/AirportRtw89.kext/Contents/MacOS/AirportRtw89
+            file "$k"
+            otool -l "$k" | grep -A2 LC_BUILD_VERSION || true
+            nm -m "$k" | grep -E '_kmod_info|Rtw89PCIProbe' | head
+          done
+
+      - name: Upload kexts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirportRtw89-${{ github.sha }}
+          path: |
+            build/Debug/AirportRtw89.kext
+            build/Release/AirportRtw89.kext

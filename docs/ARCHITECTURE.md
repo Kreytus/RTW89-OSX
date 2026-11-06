@@ -35,10 +35,10 @@ Raw inventory of every mac80211/cfg80211 call site:
 
 | Chip | Wi-Fi PCI ID (10ec:) | FW file(s) | BT USB IDs (btusb_main.c) | BT FW |
 |---|---|---|---|---|
-| **RTL8852BE** (primary) | b852, b85b | `rtw89/rtw8852b_fw.bin`, `_fw-1.bin`, `_fw-2.bin` (`FW_FORMAT_MAX 2`) | 0bda:4853, 0bda:887b, 0bda:b85b, 0cb8:c559, 13d3:3570/3571/3572/3591, 0489:e123/e125 | `rtl_bt/rtl8852bu_fw.bin` + `rtl8852bu_config.bin` |
+| RTL8852BE | b852, b85b | `rtw89/rtw8852b_fw.bin`, `_fw-1.bin`, `_fw-2.bin` (`FW_FORMAT_MAX 2`) | 0bda:4853, 0bda:887b, 0bda:b85b, 0cb8:c559, 13d3:3570/3571/3572/3591, 0489:e123/e125 | `rtl_bt/rtl8852bu_fw.bin` + `rtl8852bu_config.bin` |
 | RTL8852BE-VT (8852BT) | b520 | `rtw89/rtw8852bt_fw.bin` (`FW_FORMAT_MAX 0`) | 0bda:8520, 0489:e12f, 13d3:3618/3619 | `rtl_bt/rtl8852btu_fw.bin` |
 | RTL8852AE | 8852, a85a | `rtw89/rtw8852a_fw[-1].bin` | 0bda:2852/c852/385a/4852, 04c5:165c, 04ca:4006, 0cb8:c549 | `rtl_bt/rtl8852au_fw.bin` |
-| RTL8852CE | c852 | `rtw89/rtw8852c_fw[-1,-2].bin` | 04ca:4007, 04c5:1675, 0cb8:c558, 13d3:3586/3587/3592/3612, 0489:e122 | `rtl_bt/rtl8852cu_fw.bin` |
+| **RTL8852CE** (primary: owner's board) | c852 | `rtw89/rtw8852c_fw[-1,-2].bin` | 04ca:4007, 04c5:1675, 0cb8:c558, 13d3:3586/3587/3592/3612, 0489:e122 | `rtl_bt/rtl8852cu_fw.bin` |
 | RTL8851BE | b851 | `rtw89/rtw8851b_fw[-1].bin` | 0bda:b850, 13d3:3600/3601, 0489:e112 | `rtl_bt/rtl8851bu_fw.bin` |
 | RTL8922AE (Wi-Fi 7) | 8922, 892b | `rtw89/rtw8922a_fw[-1..-4].bin` | 0bda:8922/d922/d923, 13d3:3616/3617, 0489:e130 | `rtl_bt/rtl8922au_fw.bin` |
 
@@ -47,12 +47,16 @@ Upstream also has RTL8922DE (10ec:892d/882d/895d) and USB-only variants
 RTL8922AE needs MLO/EHT, which IO80211 has no known public interface for, so
 it would run as an HE/EHT single-link station at best **[verify]**.
 
-Order: 8852BE first, then 8852BT/8851BE (same `rtw8852b_common.c` family),
-then 8852AE/8852CE, then 8922AE last.
+Order (changed after Phase 0): the owner's test board, a Gigabyte B650M D3HP
+AX rev 1.0/1.2, carries an **RTL8852CE** (Gigabyte spec page). So
+**8852CE comes first**, which brings 6 GHz and 160 MHz into the first
+milestone (risk R4 moves up). Then 8852BE/8852BT/8851BE (`rtw8852b_common.c`
+family), 8852AE, and 8922AE last. 8852CE uses its own `rtw8852c*.c` files
+(the largest chip table, 57 k lines). Its coex runs on the same `coex.c`.
 
 ---
 
-## 3. Licensing: a decision is needed before code
+## 3. Licensing (decided: GPL-3.0, clean-room shim)
 
 The repository `LICENSE` is **GPL-3.0**. What that means for each input:
 
@@ -69,7 +73,12 @@ The point that matters: rtw89 is written against `mac80211.h`, and mac80211
 supplies most of the 802.11 behaviour the driver relies on (see §4.3). Two
 consistent choices:
 
-- **Option L1, keep GPL-3.0 (recommended):** write `linux_compat/` as a
+**Decision (owner, after Phase 0): Option L1.** The repository stays
+GPL-3.0, and no line of `net/mac80211`, `net/wireless` or their headers is
+copied. `linux_compat/include/net/mac80211.h` is written from scratch, using
+rtw89's call sites as the spec.
+
+- **Option L1, keep GPL-3.0 (chosen):** write `linux_compat/` as a
   clean-room reimplementation of the subset of the mac80211/cfg80211 API that
   rtw89 uses (struct layouts and function signatures, which are an interface)
   plus our own 802.11 state machines. We copy no mac80211 code. More work, but
@@ -436,7 +445,17 @@ is a separate kext.
 
 ---
 
-## 12. Hardware information needed before Phase 1
+## 12. Test hardware
+
+See [`TESTING.md`](TESTING.md). In short: B650M D3HP AX (AMD AM5),
+RTL8852CE, macOS **26.7 Tahoe (25G229)** only, SMBIOS MacBookPro16,1,
+OpenCore on the only USB stick. **Tahoe is the only test target**, so
+Sonoma/Sequoia rows in STATUS stay untested unless someone else tests them.
+
+Still open: exact PCI subsystem ID (from the Phase 1a probe), BT VID:PID,
+SIP value, OCLP state, OpenCore version, and a Linux reference boot.
+
+## 13. Original hardware checklist (Phase 0)
 
 1. Exact Wi-Fi chip and PCI ID (`lspci -nn` or IORegistry `device-id`,
    `subsystem-id`, `revision-id`).
