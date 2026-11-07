@@ -34,6 +34,7 @@ private:
     bool fOpened = false;
 
     void releaseResources();
+    void logProviderClients();
 };
 
 #endif

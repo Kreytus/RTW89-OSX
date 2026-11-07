@@ -7,7 +7,7 @@
 #   make                 DEBUG and RELEASE builds into build/{Debug,Release}
 #   make Release         one configuration
 
-VERSION     ?= 0.0.1
+VERSION     ?= 0.0.2
 SDK_DIR     ?= MacKernelSDK
 SDK_COMMIT  ?= 3f750085caa17ec3a7880f11c11bf4f48cd6a164
 MIN_MACOS   ?= 14.0

@@ -51,6 +51,8 @@ bool Rtw89PCIProbe::start(IOService *provider)
     if (!super::start(provider))
         return false;
 
+    RLOG("AirportRtw89 " KEXT_VERSION " probe starting");
+
     fPci = OSDynamicCast(IOPCIDevice, provider);
     if (!fPci) {
         RLOG("provider is not an IOPCIDevice");
@@ -58,14 +60,6 @@ bool Rtw89PCIProbe::start(IOService *provider)
         return false;
     }
     fPci->retain();
-
-    if (!fPci->open(this)) {
-        RLOG("could not open PCI provider (already in use?)");
-        releaseResources();
-        super::stop(provider);
-        return false;
-    }
-    fOpened = true;
 
     const UInt16 vendor = fPci->configRead16(kIOPCIConfigVendorID);
     const UInt16 device = fPci->configRead16(kIOPCIConfigDeviceID);
@@ -78,12 +72,29 @@ bool Rtw89PCIProbe::start(IOService *provider)
          fPci->getBusNumber(), fPci->getDeviceNumber(),
          fPci->getFunctionNumber());
 
+    RLOG("provider name '%s' location '%s'", fPci->getName(),
+         fPci->getLocation() ? fPci->getLocation() : "");
+
     if (vendor != kVendorRealtek) {
         RLOG("not a Realtek device, detaching");
         releaseResources();
         super::stop(provider);
         return false;
     }
+
+    /*
+     * Opening the nub gives us exclusive use of the device. If another
+     * driver already holds it, list every client attached to the device so
+     * the log shows who owns it, then back off without touching MMIO.
+     */
+    if (!fPci->open(this)) {
+        RLOG("could not open PCI provider: another client holds it open");
+        logProviderClients();
+        releaseResources();
+        super::stop(provider);
+        return false;
+    }
+    fOpened = true;
 
     /* Remember the command register so stop() leaves it as we found it. */
     fSavedCommand = fPci->configRead16(kIOPCIConfigCommand);
@@ -135,6 +146,29 @@ void Rtw89PCIProbe::stop(IOService *provider)
     RLOG("stopping");
     releaseResources();
     super::stop(provider);
+}
+
+void Rtw89PCIProbe::logProviderClients()
+{
+    RLOG("provider open by anyone: %s", fPci->isOpen() ? "yes" : "no");
+    OSIterator *it = fPci->getClientIterator();
+    if (!it) {
+        RLOG("could not iterate provider clients");
+        return;
+    }
+    unsigned count = 0;
+    while (OSObject *obj = it->getNextObject()) {
+        IOService *client = OSDynamicCast(IOService, obj);
+        if (!client)
+            continue;
+        count++;
+        RLOG("  client %u: class %s, name '%s', open=%s", count,
+             client->getMetaClass()->getClassName(), client->getName(),
+             fPci->isOpen(client) ? "yes" : "no");
+    }
+    it->release();
+    if (!count)
+        RLOG("  no clients attached (open held by a non-client)");
 }
 
 void Rtw89PCIProbe::releaseResources()

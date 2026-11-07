@@ -12,7 +12,8 @@ Test machine (owner's):
 | SIP | Fully disabled (`csrutil status`, owner report) |
 | USB map | USBToolBox (`USBToolBox.kext` + `UTBMap.kext`) |
 | OCLP | **No root patches installed.** IO80211/IOSkywalkFamily are stock 26.7 |
-| BT as macOS sees it | Only the placeholder entry bluetoothd shows when it finds **no** controller: `Chipset BCM_4350C2, Transport UART, Address NULL, Firmware v0 c0, Vendor 0x004C`. The Realtek USB BT device hasn't been identified yet; it may be hidden by the USB port map (see below) |
+| BT USB device | **`0bda:0852`** "Bluetooth Radio" (owner's `ioreg -p IOUSB`). The port is already in the USBToolBox map. Not listed by ID in btusb, but matched there by the generic Realtek rule (`0x0bda`, class E0/01/01). btrtl picks the firmware at runtime from `lmp_subver`/`hci_rev` |
+| BT as macOS sees it | Only the placeholder bluetoothd shows when it accepts **no** controller (`BCM_4350C2`, UART, address NULL), as expected with no Realtek loader yet |
 
 ## Rule 1: never inject development kexts through OpenCore
 
@@ -95,6 +96,12 @@ ioreg -rc Rtw89PCIProbe -l | grep rtw89
 ```bash
 sudo kmutil unload -b org.rtw89osx.AirportRtw89
 ```
+
+### Phase 1a results so far
+
+| Date | Build | Result |
+|---|---|---|
+| 2026-11-07 | 0.0.1 | Kext loaded and matched. `IOPCIDevice::open()` failed: **another client already has the Wi-Fi function open**. No MMIO access was attempted. Build 0.0.2 logs the PCI IDs before opening, plus every client attached to the device, to identify the owner |
 
 Expected log lines:
 
